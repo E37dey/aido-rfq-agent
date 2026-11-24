@@ -7,7 +7,7 @@
 קו מלא הוא חלק שנבנה ורץ. קו מקווקו הוא חלק מתוכנן.
 
 ```mermaid
-flowchart LR
+flowchart TD
     subgraph IN["מקורות"]
         GM["Gmail של המפעל<br/>מייל עם תווית RFQ"]
         WH["Webhook<br/>JSON עם מייל ושרטוט"]
