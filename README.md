@@ -14,6 +14,22 @@
 
 מתוך הריצה של RFQ-002, הבקשה השנייה של אותו לקוח. הקבצים המלאים ב-[runs/rfq-002-v2-20261124-203930/outputs](runs/rfq-002-v2-20261124-203930/outputs/).
 
+## הסוכן בקונסולה של Claude
+
+ההגדרות כפי שהן מופיעות ב-Claude Console. המודל, רמת המאמץ, ההוראות, הכלים וה-Skills, גרסה 2:
+
+![הגדרות הסוכן: מודל, effort והוראות](docs/console-1-agent-config.png)
+
+![כלים והרשאות, Skills](docs/console-2-tools-skills.png)
+
+| ארבע הריצות, עם גרסה ועלות מול תקציב | ה-memory stores |
+|---|---|
+| ![sessions](docs/console-3-sessions.png) | ![memory stores](docs/console-4-memory-stores.png) |
+
+session אחד: ה-rubric בתחילת התמליל, ומימין התוצאה וההסבר של הבודק העצמאי:
+
+![session viewer](docs/console-5-session-viewer.png)
+
 ## התוצאה בקיצור
 
 - 4 ריצות אמיתיות ב-Managed Agents, בשתי גרסאות של אותו סוכן. הסוכן מצא כל מה שנשתל בנתונים: סתירה בין המייל לשרטוט, בקשות מחוץ לכללים של המפעל, "תנאים שסיכמנו" שלא סוכמו, וקשיות שחסרה בשרטוט. אף אחד מהם לא נפתר בשקט.

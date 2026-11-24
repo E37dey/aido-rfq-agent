@@ -10,7 +10,7 @@
 | 2. מרכיב אחד והחשיבות שלו | [SPEC.md](SPEC.md), סעיף 5 (זיכרון), והבדיקה שלו בסעיף 3 כאן |
 | 3. תכנון: כלים וזיכרון | [SPEC.md](SPEC.md) |
 | 4. טריגר, זרימה, פלט | [Architecture.md](Architecture.md): שלושה תרשימים (גרסה 1, זיכרון בין ריצות, פיילוט) |
-| 5. סוכן מקצה לקצה | [templates/](templates/) (הקונפיגורציה), [scripts/](scripts/) (ההרצה), [runs/](runs/) (מה יצא) |
+| 5. סוכן מקצה לקצה | מסך הקונפיגורציה בקונסולה: [docs/console-1-agent-config.png](docs/console-1-agent-config.png) ו-[docs/console-2-tools-skills.png](docs/console-2-tools-skills.png). ההגדרות כקבצים: [templates/](templates/). ההרצה: [scripts/](scripts/). מה יצא: [runs/](runs/) |
 
 ## 2. מה רץ בפועל
 
@@ -94,4 +94,4 @@
 
 - מפתח ה-API: נקרא ממשתנה סביבה או מקלט מוסתר, ולא נשמר בשום מקום.
 - `state/ids.json`: המזהים של המשאבים בחשבון שלי. לא רלוונטי למי שמריץ בחשבון אחר.
-- מסך ה-Sessions בקונסולה: אי אפשר לשתף אותו. במקומו שמורים `agent-messages.md` ו-`grader-report.md`.
+- מסך ה-Sessions בקונסולה: אי אפשר לשתף אותו. במקומו שמורים `agent-messages.md`, `grader-report.md`, וצילומי מסך ב-`docs/console-*.png`.
