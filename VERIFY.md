@@ -83,15 +83,20 @@
 
 השוואה ויזואלית: [docs/owner-brief-v1-run2.png](docs/owner-brief-v1-run2.png) מול [docs/owner-brief-v2.png](docs/owner-brief-v2.png).
 
-## 5. בדיקה עצמית מהירה (5 דקות)
+## 5. אותו סוכן ב-Make
+
+בניתי את אותו סוכן גם ב-Make: Webhook, הורדת השרטוט, Make AI Agent עם המחירון והכללים, ו-Data store כזיכרון. הרצתי אותו על RFQ-001. ה-scenario עבד, אבל המודל שזמין בתוכנית החינמית (gpt-5-nano) פספס את הסתירה, טעה במשקל ובמחיר, וכתב לזיכרון במפתח לא נכון. הפירוט, צילומי המסך והתשובה המלאה: [make/README.md](make/README.md).
+
+## 6. בדיקה עצמית מהירה (5 דקות)
 
 1. לפתוח את [runs/rfq-002-v2-20261124-203930/outputs/owner-brief-Q-2026-0414.pdf](runs/rfq-002-v2-20261124-203930/outputs/owner-brief-Q-2026-0414.pdf) ולבדוק שהוא מובן בלי הסבר.
 2. לפתוח את `quote-Q-2026-0414.xlsx` מאותה תיקייה, גיליון "חישוב", ולבדוק שורה אחת מול [seed/pricing/rates.md](seed/pricing/rates.md).
 3. להשוות את [memory-after של ריצה 1](runs/rfq-001-v2-20261124-203904/memory-after/customers/robotica-zafon.md) ל-[memory-after של ריצה 2](runs/rfq-002-v2-20261124-203930/memory-after/customers/robotica-zafon.md): רואים מה הסוכן כתב בריצה הראשונה, ומה הוסיף בשנייה.
 4. לקרוא את [grader-report.md](runs/rfq-002-v2-20261124-203930/grader-report.md): הבודק העצמאי מפרט מה בדק בכל קריטריון.
 
-## 6. מה לא בריפו, ולמה
+## 7. מה לא בריפו, ולמה
 
 - מפתח ה-API: נקרא ממשתנה סביבה או מקלט מוסתר, ולא נשמר בשום מקום.
 - `state/ids.json`: המזהים של המשאבים בחשבון שלי. לא רלוונטי למי שמריץ בחשבון אחר.
+- כתובת ה-Webhook של Make: מי שיודע אותה יכול להפעיל את ה-scenario.
 - מסך ה-Sessions בקונסולה: אי אפשר לשתף אותו. במקומו שמורים `agent-messages.md`, `grader-report.md`, וצילומי מסך ב-`docs/console-*.png`.
