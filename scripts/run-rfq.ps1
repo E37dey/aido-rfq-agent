@@ -6,15 +6,21 @@ param(
     [Parameter(Mandatory = $true)][string]$RfqDir,
     [string]$ResumeSessionId = "",
     [string]$BudgetCents = "500",
-    [int]$TimeoutMinutes = 40
+    [int]$TimeoutMinutes = 40,
+    # For sessions started elsewhere (e.g. by the Make scenario): which history store to snapshot,
+    # and a label for the run folder name (runs\<rfq>-<label>-v<N>-<time>).
+    [string]$HistoryStoreId = "",
+    [string]$RunLabel = ""
 )
 . "$PSScriptRoot\common.ps1"
 $ids = Get-Ids
 if (-not $ids.agent_id -or -not $ids.history_store_id) { throw "Run scripts\setup-rfq-agent.ps1 first." }
+if ($HistoryStoreId) { $ids.history_store_id = $HistoryStoreId }
 
 $RfqDir = (Resolve-Path $RfqDir).Path
 $name = Split-Path $RfqDir -Leaf
-$RunDir = Join-Path $Repo ("runs\" + $name + "-v" + $ids.agent_version + "-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+$label = if ($RunLabel) { "-" + $RunLabel } else { "" }
+$RunDir = Join-Path $Repo ("runs\" + $name + $label + "-v" + $ids.agent_version + "-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 New-Item -ItemType Directory -Force -Path $RunDir | Out-Null
 
 if ($ResumeSessionId) {
