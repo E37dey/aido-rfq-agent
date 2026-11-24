@@ -1,8 +1,10 @@
 # One RFQ -> one session. Uploads the RFQ folder, runs the agent with both memory stores,
 # waits, then saves the agent's messages, output files, cost, and a snapshot of quote-history.
 # Usage:  powershell -ExecutionPolicy Bypass -File .\scripts\run-rfq.ps1 -RfqDir .\demo\rfq-001
+# Collect an existing session again (no new session, no new cost): add -ResumeSessionId sesn_...
 param(
     [Parameter(Mandatory = $true)][string]$RfqDir,
+    [string]$ResumeSessionId = "",
     [string]$BudgetCents = "500",
     [int]$TimeoutMinutes = 40
 )
@@ -12,9 +14,13 @@ if (-not $ids.agent_id -or -not $ids.history_store_id) { throw "Run scripts\setu
 
 $RfqDir = (Resolve-Path $RfqDir).Path
 $name = Split-Path $RfqDir -Leaf
-$RunDir = Join-Path $Repo ("runs\" + $name + "-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+$RunDir = Join-Path $Repo ("runs\" + $name + "-v" + $ids.agent_version + "-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
 New-Item -ItemType Directory -Force -Path $RunDir | Out-Null
 
+if ($ResumeSessionId) {
+    $sid = $ResumeSessionId
+    Write-Host "Resuming session $sid (nothing new is created)"
+} else {
 # 1. Upload every file in the RFQ folder
 Step "Uploading $name"
 $resources = @()
@@ -28,7 +34,10 @@ foreach ($f in Get-ChildItem $RfqDir -File) {
 
 # 2. Session: agent (pinned version) + environment + files + both memory stores + budget + outcome
 Step "Starting session (budget $([double]$BudgetCents / 100) USD)"
-$s = Read-Template "session-rfq.json"
+# Version 1 of the agent keeps its own rubric; version 2 and later use the current template.
+$tpl = if ([int]$ids.agent_version -le 1) { "session-rfq.v1.json" } else { "session-rfq.json" }
+Write-Host "Agent version $($ids.agent_version), session template $tpl"
+$s = Read-Template $tpl
 $s.agent.id = $ids.agent_id
 $s.agent.version = [int]$ids.agent_version
 $s.environment_id = $ids.environment_id
@@ -40,6 +49,7 @@ $s.budget.max_list_cost.amount = $BudgetCents
 $session = Invoke-Api POST "/sessions" $s
 $sid = $session.id
 Write-Host "Session: $sid  (watch it live in the Console: Sessions)"
+}
 
 # 3. Wait until the session is no longer running
 $t0 = Get-Date; $deadline = $t0.AddMinutes($TimeoutMinutes)
@@ -67,9 +77,24 @@ if ($errs) { Write-Utf8 (Join-Path $RunDir "session-errors.json") ($errs | Conve
 $outs = $null
 for ($i = 0; $i -lt 5 -and -not $outs; $i++) { Start-Sleep -Seconds 3; $outs = (Invoke-Api GET "/files?scope_id=$sid").data }
 $outDir = Join-Path $RunDir "outputs"; New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+$inputNames = @(Get-ChildItem $RfqDir -File | ForEach-Object { $_.Name })
 foreach ($f in $outs) {
+    if ($inputNames -contains $f.filename) { continue }   # uploaded inputs are listed too, but cannot be downloaded
     & curl.exe -s -o (Join-Path $outDir $f.filename) "$ApiBase/files/$($f.id)/content" -H "x-api-key: $Key" -H "anthropic-version: $ApiVersion" -H "anthropic-beta: $BetaAgents"
     Write-Host "Downloaded: $($f.filename)"
+}
+
+# 5b. HTML outputs -> PDF with the local Chrome (Hebrew RTL renders correctly there)
+$chrome = @("$env:ProgramFiles\Google\Chrome\Application\chrome.exe", "${env:ProgramFiles(x86)}\Google\Chrome\Application\chrome.exe", "$env:LOCALAPPDATA\Google\Chrome\Application\chrome.exe") | Where-Object { Test-Path $_ } | Select-Object -First 1
+foreach ($h in Get-ChildItem $outDir -Filter *.html -ErrorAction SilentlyContinue) {
+    if (-not $chrome) { Write-Host "Chrome not found; skipped PDF for $($h.Name)" -ForegroundColor Yellow; break }
+    $pdf = [System.IO.Path]::ChangeExtension($h.FullName, ".pdf")
+    $uri = ([System.Uri]$h.FullName).AbsoluteUri
+    # Chrome writes harmless warnings to stderr; under ErrorActionPreference=Stop, PowerShell 5.1 treats them as errors.
+    $prevPref = $ErrorActionPreference; $ErrorActionPreference = "Continue"
+    & $chrome --headless=new --disable-gpu --no-pdf-header-footer "--print-to-pdf=$pdf" $uri 2>&1 | Out-Null
+    $ErrorActionPreference = $prevPref
+    if (Test-Path $pdf) { Write-Host "PDF: $([System.IO.Path]::GetFileName($pdf))" }
 }
 
 # 6. Snapshot of quote-history after the run (shows what the agent wrote to memory)

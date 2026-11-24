@@ -2,3 +2,5 @@
 *.env
 state/
 runs/*/raw-events.json
+# partial collect from the crashed v2 run (full copy is in rfq-001-v2-20261124-203904)
+runs/rfq-001-v2-20261124-201912/

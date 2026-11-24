@@ -1,0 +1,64 @@
+{
+    "rfq":  "rfq-001",
+    "session_id":  "sesn_01QH83quEDQ8gNifG9omcMU1",
+    "agent_version":  2,
+    "status":  "idle",
+    "stop_reason":  null,
+    "wall_seconds":  16,
+    "usage":  {
+                  "active_seconds":  715.742,
+                  "cache_creation":  {
+                                         "ephemeral_1h_input_tokens":  0,
+                                         "ephemeral_5m_input_tokens":  166043
+                                     },
+                  "cache_read_input_tokens":  3184716,
+                  "input_tokens":  146,
+                  "list_cost":  {
+                                    "amount":  "270",
+                                    "currency":  "USD"
+                                },
+                  "output_tokens":  60641,
+                  "server_tool_use":  {
+                                          "web_fetch_requests":  0,
+                                          "web_search_requests":  0
+                                      }
+              },
+    "outcome_evaluations":  [
+                                {
+                                    "completed_at":  "2026-11-24T18:31:05.349Z",
+                                    "description":  "Draft quote for the RFQ in /mnt/session/uploads/rfq/",
+                                    "explanation":  "An independent grader found all criteria met:\n\n- Draft quote package for RFQ FL-80-A (owner brief, customer quote, Excel, reply, memory updates) (met): I checked all ten rubric points. Each one is met.\n\n1. **Owner brief file and section order.** `owner-brief-Q-2026-0413.html` has `lang=he dir=rtl` and is written in Hebrew. Its sections run in the required order: 1. בשורה התחתונה, 2. החלטות שמחכות לך, 3. שאלות ללקוח, 4. מה בדקתי ומה הערכתי, 5. איך חושב.\n\n2. **Decisions have options, effects and recommendations.** There are three decisions: finish (anodize vs. natural), the 3-week lead time, and net+90 payment terms. Each has a table of options with columns for price and lead time, plus a \u0027המלצה\u0027 box. Example from the finish decision: 111.32/92.57 ₪ at 20 working days, vs. 101.32/86.94 ₪ at 15 working days. The urgent-delivery option says \u0027לא תומחר (אין קוד לדחיפות)\u0027, which states its price effect explicitly.\n\n3. **Page count and page one.** I rendered the brief to an A4 PDF with Chromium. It is exactly 2 pages. Page 1 holds the bottom line and all three decisions; the questions, checks/estimates and calculation sections are on page 2.\n\n4. **Customer quote contents.** `quote-Q-2026-0413.html` has:\n   - shop header, quote number, date 24.11.2026, valid-until 24.12.2026, customer and contact\n   - lines for 50 and 100 units, each with unit price and line total\n   - subtotal, VAT 18%, and total (6,568 / 10,923 ₪)\n   - lead time of 20 working days and payment terms net+30\n   - 8 assumptions and a signature line\n\n   A regex search for R/M codes returned no matches.\n\n5. **Excel workbook.** The sheets are named הצעה, חישוב, שאלות.\n   - חישוב shows the raw stock as Ø85 (80+3, rounded up to the next standard size) × 17 mm (12+5), weighing 0.2605 kg.\n   - Every rate row cites R1–R10 or M1, with the source file. VAT cites rules.md rule 6.\n   - All values match the shop-pricing files, and cached formula values are present.\n\n6. **Totals agree across documents.** The brief, the customer quote, the Excel file and the reply all show the same figures: 111.32 / 5,566 ₪ for 50 units and 92.57 / 9,257 ₪ for 100 units. VAT is 1,002 / 1,666 ₪ and totals are 6,568 / 10,923 ₪. The natural-finish alternative is 101.32 / 86.94 ₪ everywhere.\n\n7. **Cycle-time estimates.** The brief states there is no similar part in history (BR-12 is milled, not turned). All cycle times are marked \u0027הערכה\u0027 with ranges: 4.0 (3–5), 3.5 (3–4.5) and 2.0 (1.5–3) minutes. Excel highlights them and includes a sensitivity table.\n\n8. **Conflicts and gaps are surfaced, not resolved silently.**\n   - Finish conflict between email and drawing: priced per the drawing and raised as both a decision and a question.\n   - 3-week request vs. the 20-day rule: a decision.\n   - Net+90 request: a decision.\n   - Datum A is not marked on the drawing: a question.\n   - H7 bore with anodize (measure after coating, or mask): a question.\n   - Quantity 50 vs. 100: a question.\n   - Material certificate or inspection report: a question.\n\n   The customer quote also flags the lead-time and payment requests in its notes.\n\n9. **Reply email.** `reply-Q-2026-0413.md` is in Hebrew, starts with \u0027טיוטה - לא נשלח\u0027, and asks 5 numbered questions.\n\n10. **Memory updates.** `log.md` has a new Q-2026-0413 row, which correctly follows 0412. `customers/robotica-zafon.md` exists and contains the details for this quote.\n\nI also re-checked the main arithmetic, and it is correct: material 10.94, setups 1,150/50, anodize minimum 400/50, cost 89.06 × 1.25 = 111.32.",
+                                    "iteration":  1,
+                                    "outcome_id":  "outc_01QTYAvGeaMYuz6eM7n81cED",
+                                    "result":  "satisfied",
+                                    "type":  "outcome_evaluation"
+                                }
+                            ],
+    "tool_calls":  [
+                       {
+                           "tool":  "bash",
+                           "count":  29
+                       },
+                       {
+                           "tool":  "read",
+                           "count":  13
+                       },
+                       {
+                           "tool":  "write",
+                           "count":  6
+                       },
+                       {
+                           "tool":  "edit",
+                           "count":  1
+                       }
+                   ],
+    "output_files":  [
+                         "quote-Q-2026-0413.html",
+                         "owner-brief-Q-2026-0413.html",
+                         "FL-80-A_revB.png",
+                         "reply-Q-2026-0413.md",
+                         "quote-Q-2026-0413.xlsx",
+                         "FL-80-A_revB.pdf",
+                         "email.txt"
+                     ]
+}
