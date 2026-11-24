@@ -1,0 +1,9 @@
+{
+  "name": "rfq-offline",
+  "config": {
+    "type": "cloud",
+    "networking": {
+      "type": "limited"
+    }
+  }
+}

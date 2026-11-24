@@ -1,0 +1,4 @@
+{
+  "name": "shop-pricing",
+  "description": "The shop's own price tables and quoting rules: rates.md (labor, setup, outsourcing, margin), materials.md (material prices, densities, stock sizes), rules.md (binding quoting rules). Read all three before pricing anything. Every price in a quote must cite a code from here."
+}

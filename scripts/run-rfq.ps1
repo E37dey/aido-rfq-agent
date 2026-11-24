@@ -1,0 +1,101 @@
+# One RFQ -> one session. Uploads the RFQ folder, runs the agent with both memory stores,
+# waits, then saves the agent's messages, output files, cost, and a snapshot of quote-history.
+# Usage:  powershell -ExecutionPolicy Bypass -File .\scripts\run-rfq.ps1 -RfqDir .\demo\rfq-001
+param(
+    [Parameter(Mandatory = $true)][string]$RfqDir,
+    [string]$BudgetCents = "500",
+    [int]$TimeoutMinutes = 40
+)
+. "$PSScriptRoot\common.ps1"
+$ids = Get-Ids
+if (-not $ids.agent_id -or -not $ids.history_store_id) { throw "Run scripts\setup-rfq-agent.ps1 first." }
+
+$RfqDir = (Resolve-Path $RfqDir).Path
+$name = Split-Path $RfqDir -Leaf
+$RunDir = Join-Path $Repo ("runs\" + $name + "-" + (Get-Date -Format "yyyyMMdd-HHmmss"))
+New-Item -ItemType Directory -Force -Path $RunDir | Out-Null
+
+# 1. Upload every file in the RFQ folder
+Step "Uploading $name"
+$resources = @()
+foreach ($f in Get-ChildItem $RfqDir -File) {
+    $up = & curl.exe -s "$ApiBase/files" -H "x-api-key: $Key" -H "anthropic-version: $ApiVersion" -F "file=@$($f.FullName)"
+    $file = $up | ConvertFrom-Json
+    if (-not $file.id) { throw "Upload failed for $($f.Name): $up" }
+    $resources += [pscustomobject]@{ type = "file"; file_id = $file.id; mount_path = "/rfq/$($f.Name)" }
+    Write-Host "  $($f.Name) -> $($file.id)"
+}
+
+# 2. Session: agent (pinned version) + environment + files + both memory stores + budget + outcome
+Step "Starting session (budget $([double]$BudgetCents / 100) USD)"
+$s = Read-Template "session-rfq.json"
+$s.agent.id = $ids.agent_id
+$s.agent.version = [int]$ids.agent_version
+$s.environment_id = $ids.environment_id
+$s.title = "RFQ $name"
+$s.resources[0].memory_store_id = $ids.pricing_store_id
+$s.resources[1].memory_store_id = $ids.history_store_id
+$s.resources = @($s.resources) + $resources
+$s.budget.max_list_cost.amount = $BudgetCents
+$session = Invoke-Api POST "/sessions" $s
+$sid = $session.id
+Write-Host "Session: $sid  (watch it live in the Console: Sessions)"
+
+# 3. Wait until the session is no longer running
+$t0 = Get-Date; $deadline = $t0.AddMinutes($TimeoutMinutes)
+do {
+    Start-Sleep -Seconds 15
+    $st = Invoke-Api GET "/sessions/$sid"
+    Write-Host ("  {0,4}s  status={1}" -f [int]((Get-Date) - $t0).TotalSeconds, $st.status)
+} while (($st.status -eq "running" -or $st.status -eq "rescheduling") -and (Get-Date) -lt $deadline)
+$elapsed = [int]((Get-Date) - $t0).TotalSeconds
+
+# 4. Agent messages and errors
+Step "Collecting results"
+$all = @(); $page = $null
+do {
+    $path = "/sessions/$sid/events"; if ($page) { $path += "?page=$page" }
+    $r = Invoke-Api GET $path; $all += $r.data; $page = $r.next_page
+} while ($page)
+$msgs = $all | Where-Object { $_.type -eq "agent.message" } | ForEach-Object { ($_.content | Where-Object { $_.type -eq "text" } | ForEach-Object { $_.text }) -join "`n" }
+Write-Utf8 (Join-Path $RunDir "agent-messages.md") ($msgs -join "`n`n---`n`n")
+$tools = $all | Where-Object { $_.type -eq "agent.tool_use" } | ForEach-Object { $_.name }
+$errs = $all | Where-Object { $_.type -eq "session.error" }
+if ($errs) { Write-Utf8 (Join-Path $RunDir "session-errors.json") ($errs | ConvertTo-Json -Depth 8); Write-Host "Session errors saved" -ForegroundColor Yellow }
+
+# 5. Output files (short indexing lag after idle)
+$outs = $null
+for ($i = 0; $i -lt 5 -and -not $outs; $i++) { Start-Sleep -Seconds 3; $outs = (Invoke-Api GET "/files?scope_id=$sid").data }
+$outDir = Join-Path $RunDir "outputs"; New-Item -ItemType Directory -Force -Path $outDir | Out-Null
+foreach ($f in $outs) {
+    & curl.exe -s -o (Join-Path $outDir $f.filename) "$ApiBase/files/$($f.id)/content" -H "x-api-key: $Key" -H "anthropic-version: $ApiVersion" -H "anthropic-beta: $BetaAgents"
+    Write-Host "Downloaded: $($f.filename)"
+}
+
+# 6. Snapshot of quote-history after the run (shows what the agent wrote to memory)
+Step "Snapshot of quote-history"
+$memDir = Join-Path $RunDir "memory-after"
+$page = $null
+do {
+    $path = "/memory_stores/$($ids.history_store_id)/memories?path_prefix=/&view=full"; if ($page) { $path += "&page=$page" }
+    $r = Invoke-Api GET $path $null $BetaMemory
+    foreach ($m in $r.data) {
+        if ($m.type -eq "memory") { Write-Utf8 (Join-Path $memDir ($m.path.TrimStart("/").Replace("/", "\"))) $m.content; Write-Host "  $($m.path)" }
+    }
+    $page = $r.next_page
+} while ($page)
+
+# 7. Summary
+$st = Invoke-Api GET "/sessions/$sid"
+$summary = [pscustomobject]@{
+    rfq = $name; session_id = $sid; agent_version = $ids.agent_version
+    status = $st.status; stop_reason = $st.stop_reason; wall_seconds = $elapsed
+    usage = $st.usage; outcome_evaluations = $st.outcome_evaluations
+    tool_calls = ($tools | Group-Object | ForEach-Object { [pscustomobject]@{ tool = $_.Name; count = $_.Count } })
+    output_files = @($outs | ForEach-Object { $_.filename })
+}
+Write-Utf8 (Join-Path $RunDir "run-summary.json") ($summary | ConvertTo-Json -Depth 10)
+Step "Done"
+Write-Host "Status: $($st.status)   Wall time: $elapsed s"
+if ($st.usage.list_cost) { Write-Host ("List cost: {0} {1} (cents)" -f $st.usage.list_cost.amount, $st.usage.list_cost.currency) }
+Write-Host "Results: $RunDir"

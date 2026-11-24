@@ -1,0 +1,41 @@
+{
+  "agent": {
+    "type": "agent",
+    "id": "agent_REPLACE",
+    "version": 1
+  },
+  "environment_id": "env_REPLACE",
+  "title": "RFQ REPLACE",
+  "resources": [
+    {
+      "type": "memory_store",
+      "memory_store_id": "memstore_PRICING",
+      "access": "read_only",
+      "instructions": "Price tables and binding quoting rules. Read before pricing."
+    },
+    {
+      "type": "memory_store",
+      "memory_store_id": "memstore_HISTORY",
+      "access": "read_write",
+      "instructions": "Quote history and customer files. Check before pricing, update after."
+    }
+  ],
+  "budget": {
+    "type": "limit",
+    "max_list_cost": {
+      "amount": "500",
+      "currency": "USD"
+    }
+  },
+  "initial_events": [
+    {
+      "type": "user.define_outcome",
+      "description": "Draft quote for the RFQ in /mnt/session/uploads/rfq/",
+      "rubric": {
+        "type": "text",
+        "content": "- quote-<number>.xlsx exists in /mnt/session/outputs/ with sheets \"הצעה\", \"חישוב\", \"שאלות\"\n- Every part and every quantity the customer asked for has a unit price and a line total\n- The \"חישוב\" sheet shows raw stock size and weight per part, and every rate cites a shop-pricing code (R1-R10, M1-M4); no price that is not in shop-pricing\n- Cycle times without a similar part in quote-history are marked as estimates with a range\n- Every conflict between the email and the drawing, every missing drawing detail, and every request outside rules.md (lead time, payment terms) appears in \"שאלות\", and none is resolved silently\n- reply-<number>.md exists, is in Hebrew, starts with \"טיוטה - לא נשלח\", and asks the customer questions\n- summary.md exists and lists what needs the owner's approval\n- /mnt/memory/quote-history/quotes/log.md has a new row for this quote, and customers/<customer>.md exists for this customer"
+      },
+      "max_iterations": 3
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "name": "quote-history",
+  "description": "What the shop has quoted before. customers/ has one file per customer (agreed payment terms, contacts, open questions). quotes/log.md has one row per quote. Check here before pricing, and add to it after every quote."
+}

@@ -1,0 +1,35 @@
+{
+  "name": "Open quotes follow-up - Sunday morning",
+  "agent": "agent_REPLACE",
+  "environment_id": "env_REPLACE",
+  "resources": [
+    {
+      "type": "memory_store",
+      "memory_store_id": "memstore_HISTORY",
+      "access": "read_write"
+    }
+  ],
+  "budget": {
+    "type": "limit",
+    "max_list_cost": {
+      "amount": "100",
+      "currency": "USD"
+    }
+  },
+  "initial_events": [
+    {
+      "type": "user.message",
+      "content": [
+        {
+          "type": "text",
+          "text": "Review quotes/log.md. For every quote with status 'נשלחה' older than 7 days and no answer, write a short Hebrew follow-up email draft to /mnt/session/outputs/followups.md. Do not change prices."
+        }
+      ]
+    }
+  ],
+  "schedule": {
+    "type": "cron",
+    "expression": "0 8 * * 0",
+    "timezone": "Asia/Jerusalem"
+  }
+}
